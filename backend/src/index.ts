@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth.routes';
 import resourceRoutes from './routes/resource.routes';
 import bookingRoutes from './routes/booking.routes';
+import favoriteRoutes from './routes/favorite.routes';
+import reviewRoutes from './routes/review.routes';
 
 dotenv.config();
 
@@ -21,7 +23,9 @@ app.get('/health', (req: Request, res: Response) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/resources', resourceRoutes);
+app.use('/api/resources/:resourceId/reviews', reviewRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/favorites', favoriteRoutes);
 
 app.listen(PORT, () => {
   console.log(`Szerver fut: http://localhost:${PORT}`);

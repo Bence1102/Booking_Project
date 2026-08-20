@@ -1,10 +1,13 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
+import { withRating } from '../utils/rating';
 
 export async function listResources(req: Request, res: Response) {
   try {
-    const resources = await prisma.resource.findMany();
-    res.json(resources);
+    const resources = await prisma.resource.findMany({
+      include: { reviews: { select: { rating: true } } },
+    });
+    res.json(resources.map(withRating));
   } catch (error) {
     console.error('Hiba a lekérés során:', error);
     res.status(500).json({ error: 'Szerver hiba az adatok lekérésekor' });
@@ -13,11 +16,14 @@ export async function listResources(req: Request, res: Response) {
 
 export async function getResource(req: Request, res: Response) {
   try {
-    const resource = await prisma.resource.findUnique({ where: { id: req.params.id } });
+    const resource = await prisma.resource.findUnique({
+      where: { id: req.params.id },
+      include: { reviews: { select: { rating: true } } },
+    });
     if (!resource) {
       return res.status(404).json({ error: 'Erőforrás nem található' });
     }
-    res.json(resource);
+    res.json(withRating(resource));
   } catch (error) {
     res.status(500).json({ error: 'Szerver hiba a lekéréskor' });
   }

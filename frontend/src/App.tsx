@@ -6,6 +6,7 @@ import AuthCard from "./components/auth/AuthCard";
 import DashboardView from "./components/views/DashboardView";
 import AccountView from "./components/views/AccountView";
 import FavoritesView from "./components/views/FavoritesView";
+import ResourcesView from "./components/views/ResourcesView";
 
 function MainContent() {
   const { token } = useAuth();
@@ -22,6 +23,8 @@ function MainContent() {
           <AccountView />
         ) : currentView === "favorites" ? (
           <FavoritesView />
+        ) : currentView === "resources" ? (
+          <ResourcesView />
         ) : (
           <DashboardView />
         )}
