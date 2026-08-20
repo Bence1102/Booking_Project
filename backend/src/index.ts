@@ -10,7 +10,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+const allowedOrigins = process.env.FRONTEND_URL?.split(',').map((origin) => origin.trim());
+
+app.use(cors({ origin: allowedOrigins ?? true }));
 app.use(express.json());
 
 app.get('/health', (req: Request, res: Response) => {
