@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { sendRegisterEmail } from '../utils/mailer';
 import { JWT_SECRET } from '../config';
@@ -15,6 +16,11 @@ const RegisterSchema = z.object({
 const LoginSchema = z.object({
   email: z.string().email('Érvénytelen email formátum'),
   password: z.string().min(1, 'A jelszó megadása kötelező'),
+});
+
+const UpdateProfileSchema = z.object({
+  name: z.string().min(2, 'A név legalább 2 karakter legyen'),
+  email: z.string().email('Érvénytelen email formátum'),
 });
 
 export async function register(req: Request, res: Response) {
@@ -78,5 +84,30 @@ export async function login(req: Request, res: Response) {
   } catch (error) {
     console.error('Bejelentkezési hiba:', error);
     res.status(500).json({ error: 'Szerver hiba a bejelentkezés során' });
+  }
+}
+
+export async function updateProfile(req: Request, res: Response) {
+  const validation = UpdateProfileSchema.safeParse(req.body);
+  if (!validation.success) {
+    return res.status(400).json({ errors: validation.error.format() });
+  }
+
+  const { name, email } = validation.data;
+
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user!.userId },
+      data: { name, email },
+      select: { id: true, email: true, name: true, role: true },
+    });
+
+    res.json(updatedUser);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      return res.status(400).json({ error: 'Ezzel az email címmel már regisztráltak' });
+    }
+    console.error('Profilfrissítési hiba:', error);
+    res.status(500).json({ error: 'Szerver hiba a profil frissítésekor' });
   }
 }

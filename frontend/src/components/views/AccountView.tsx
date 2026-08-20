@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
+import api from "../../api/axios";
 
 export default function AccountView() {
   const { userName, userEmail, updateProfile } = useAuth();
@@ -9,12 +10,24 @@ export default function AccountView() {
   const [name, setName] = useState(userName);
   const [email, setEmail] = useState(userEmail);
   const [success, setSuccess] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleUpdate = (e: React.FormEvent) => {
+  const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile(name, email);
-    setSuccess(t.successSave);
-    setTimeout(() => setSuccess(""), 3000);
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await api.patch("/auth/me", { name, email });
+      updateProfile(res.data.name, res.data.email);
+      setSuccess(t.successSave);
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Sikertelen mentés!");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -25,6 +38,12 @@ export default function AccountView() {
       {success && (
         <div className="mb-6 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs">
           {success}
+        </div>
+      )}
+
+      {error && (
+        <div className="mb-6 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs">
+          {error}
         </div>
       )}
 
@@ -55,7 +74,8 @@ export default function AccountView() {
         </div>
         <button
           type="submit"
-          className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all shadow-md"
+          disabled={loading}
+          className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all shadow-md disabled:opacity-50"
         >
           {t.saveChanges}
         </button>
